@@ -5,6 +5,7 @@ import numpy as np
 import hashlib
 
 st.title("Client Query Management System")
+st.write("App deployed successfully!")
 
 #hashing password
 def hash_password(password):
@@ -156,6 +157,7 @@ elif st.session_state.page == "client":
     client_page()
 elif st.session_state.page == "support":
     support_page()
+
 
 
 
