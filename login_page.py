@@ -1,81 +1,57 @@
+import pymysql
 import streamlit as st
 import pandas as pd
-import pymysql
+import numpy as np 
 import hashlib
 
 st.title("Client Query Management System")
 
-# ==========================
-# CONFIGURATION
-# ==========================
-USE_DATABASE = False  # ❌ Change to True after you set up a cloud DB
-
-DB_CONFIG = {
-    "host": "localhost",   # e.g. Railway or PlanetScale host
-    "user": "root",
-    "password": "123456789",
-    "database": "client_query"
-}
-
-# ==========================
-# UTILITIES
-# ==========================
+#hashing password
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
+#connecting DB
 def get_connection():
-    if not USE_DATABASE:
-        return None
     return pymysql.connect(
-        host=DB_CONFIG["host"],
-        user=DB_CONFIG["user"],
-        password=DB_CONFIG["password"],
-        database=DB_CONFIG["database"],
+        host="localhost",
+        user="root",            
+        password="123456789",
+        database="client_query",
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# ==========================
-# AUTHENTICATION
-# ==========================
+#login page
 def login_user(username, password, role):
-    if not USE_DATABASE:
-        # Fake login for testing
-        if username == "test" and password == "123":
-            return {"username": "test", "role": role}
-        return None
-    
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM users WHERE username=%s AND hashed_password=%s AND role=%s",
-            (username, hash_password(password), role)
-        )
-        result = cursor.fetchone()
-        conn.close()
-        return result
-    except Exception as e:
-        st.error(f"❌ DB Error: {e}")
-        return None
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM users WHERE username=%s AND hashed_password=%s AND role=%s",
+        (username, hash_password(password), role)
+    )
+    result = cursor.fetchone()
+    conn.close()
+    return result
 
 def login_page():
     st.subheader("Login")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-    role = st.sidebar.radio("Select role", ("client", "support"))
+    role = st.sidebar.radio('select any one',("client", "support")) 
 
     if st.button("Login"):
         user = login_user(username, password, role)
         if user:
-            st.success(f"✅ Welcome {username} ({role})!")
-            st.session_state.page = role
+            st.success(f"✅Welcome! You are logged in.")
+            if role == "client":
+                st.session_state.page = "client"
+            else:
+                st.session_state.page = "support"
         else:
             st.error("❌ Invalid username or password")
 
-# ==========================
-# CLIENT DASHBOARD
-# ==========================
+
+#client dashboard 
 def client_page():
     st.subheader("Submit a Query")
     email = st.text_input("Email ID*")
@@ -85,97 +61,92 @@ def client_page():
 
     if st.button("Submit Query"):
         if not email or not mobile or not heading or not description:
-            st.warning("⚠ Please fill all required fields")
+            st.warning("⚠️ Please fill all the required * fields.")
         else:
-            if not USE_DATABASE:
-                st.success("✅ Query submitted (testing mode, not saved).")
-                return
-            try:
-                conn = get_connection()
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    INSERT INTO client (client_email, client_mobile, query_heading, query_description, status, date_raised) 
-                    VALUES (%s, %s, %s, %s, %s, NOW())
-                    """,
-                    (email, mobile, heading, description, "Opened")
-                )
-                conn.commit()
-                conn.close()
-                st.success("✅ Your query has been submitted successfully!")
-            except Exception as e:
-                st.error(f"❌ DB Error: {e}")
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO client (client_email, client_mobile, query_heading, query_description, status, date_raised) 
+                VALUES (%s, %s, %s, %s, %s, NOW())
+                """,
+                (email, mobile, heading, description, "Opened")
+            )
+            conn.commit()
+            conn.close()
+            st.success("✅ Your query has been submitted successfully!")
 
-# ==========================
-# SUPPORT DASHBOARD
-# ==========================
+
+#support dashboard
 def support_page():
     st.subheader("Support Dashboard")
-    filter_option = st.selectbox("Filter by status", ["All", "Opened", "Closed"])
 
-    if not USE_DATABASE:
-        st.info("📌 Testing mode: Showing sample data")
-        sample_data = pd.DataFrame([
-            {"query_id": 1, "client_email": "abc@test.com", "query_heading": "Login Issue",
-             "query_description": "Unable to login", "status": "Opened", "date_raised": "2025-09-22"}
-        ])
-        st.dataframe(sample_data)
+    #To filter query status
+    filter_option = st.selectbox(
+        "Filter by status",
+        ["All", "Opened", "Closed"]
+    )
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    #To apply status filter option in SQL query
+    if filter_option == "All":
+        cursor.execute("""
+            SELECT query_id, client_email, query_heading, query_description, status, date_raised, date_closed
+            FROM client
+            ORDER BY date_raised DESC
+        """)
+    else:
+        cursor.execute("""
+            SELECT query_id, client_email, query_heading, query_description, status, date_raised, date_closed
+            FROM client
+            WHERE status=%s
+            ORDER BY date_raised DESC
+        """, (filter_option,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    if not rows:
+        st.info(f"No {filter_option.lower()} queries found.")
         return
 
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        if filter_option == "All":
-            cursor.execute("""
-                SELECT query_id, client_email, query_heading, query_description, status, date_raised, date_closed
-                FROM client ORDER BY date_raised DESC
-            """)
-        else:
-            cursor.execute("""
-                SELECT query_id, client_email, query_heading, query_description, status, date_raised, date_closed
-                FROM client WHERE status=%s ORDER BY date_raised DESC
-            """, (filter_option,))
-        rows = cursor.fetchall()
-        conn.close()
+    #To display queries
+    for row in rows:
+        query_id = row["query_id"]
+        email = row["client_email"]
+        heading = row["query_heading"]
+        description = row["query_description"]
+        status = row["status"]
+        date_raised = row["date_raised"]
+        date_closed = row["date_closed"]
 
-        if not rows:
-            st.info(f"No {filter_option.lower()} queries found.")
-            return
+        with st.expander(f"#{query_id} - {heading} ({status})"):
+            st.write(f"**Email:** {email}")
+            st.write(f"**Description:** {description}")
+            st.write(f"**Status:** {status}")
+            st.write(f"**Raised On:** {date_raised}")
 
-        for row in rows:
-            with st.expander(f"#{row['query_id']} - {row['query_heading']} ({row['status']})"):
-                st.write(f"**Email:** {row['client_email']}")
-                st.write(f"**Description:** {row['query_description']}")
-                st.write(f"**Status:** {row['status']}")
-                st.write(f"**Raised On:** {row['date_raised']}")
+            if status == "Closed" and date_closed:
+                st.write(f"**Closed On:** {date_closed}")
 
-                if row["status"] == "Closed" and row["date_closed"]:
-                    st.write(f"**Closed On:** {row['date_closed']}")
+            # ✅ Show button ONLY for open queries
+            if status == "Opened":
+                if st.button(f"Close Query {query_id}", key=f"close_{query_id}"):
+                    conn = get_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "UPDATE client SET status='Closed', date_closed=NOW() WHERE query_id=%s",
+                        (query_id,)
+                    )
+                    conn.commit()
+                    conn.close()
+                    st.success(f"✅ Query {query_id} closed successfully!")
+                    st.rerun()
 
-                if row["status"] == "Opened":
-                    if st.button(f"Close Query {row['query_id']}", key=f"close_{row['query_id']}"):
-                        try:
-                            conn = get_connection()
-                            cursor = conn.cursor()
-                            cursor.execute(
-                                "UPDATE client SET status='Closed', date_closed=NOW() WHERE query_id=%s",
-                                (row["query_id"],)
-                            )
-                            conn.commit()
-                            conn.close()
-                            st.success(f"✅ Query {row['query_id']} closed successfully!")
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"❌ DB Error: {e}")
-    except Exception as e:
-        st.error(f"❌ DB Error: {e}")
-
-# ==========================
-# NAVIGATION
-# ==========================
 if "page" not in st.session_state:
     st.session_state.page = "login"
-
 if st.sidebar.button("Logout"):
     st.session_state.page = "login"
 
