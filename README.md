@@ -27,7 +27,7 @@ Client Query Management System is a simple web application built using Streamlit
 
 1️⃣ Download the Project:
 
-    git clone https://github.com/your-username/client-query-system.git
+    git clone https://github.com/Bhuvaneshwari2002/client-query-system.git
     cd client-query-system
 
 2️⃣ Install Packages:
