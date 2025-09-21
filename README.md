@@ -5,14 +5,14 @@
 Client Query Management System is a simple web application built using Streamlit where:
 
 - Clients can login & raise their queries.
-- Support team members can login and view all queries,close open queries and can see the history of closed queries.
+- Support team members can login and view all queries,close open queries
 
 
 🚀Features:
 - Client Login & Query Submission – Secure login and easy to use form for raising queries.
 - Support Dashboard – View open and closed queries,view the history of closed queries.
 - Query Tracking – Track query status (Open/Closed) with timestamps.
-- Streamlit UI - Clean,interactive interface for both clients & support team members
+- Streamlit UI - Interactive interface for both clients & support team members
 
 
 🛠 Tech Stack:
@@ -30,7 +30,7 @@ Client Query Management System is a simple web application built using Streamlit
     git clone https://github.com/your-username/client-query-system.git
     cd client-query-system
 
-2️⃣ Install Dependencies:
+2️⃣ Install Packages:
 Create a virtual environment and install required packages:
 
     pip install streamlit pymysql pandas numpy
@@ -43,6 +43,20 @@ Open MySql & run:
 4️⃣ Run the Streamlit app:
 
     streamlit run app.py
+    
+
+📸Sreenshots for reference:
+- Login Page:
+<img width="1920" height="916" alt="image" src="https://github.com/user-attachments/assets/fe8bf401-f8c9-4779-85df-6d25bc941c9b" />
+
+- Client Page:
+<img width="1920" height="931" alt="Client_page" src="https://github.com/user-attachments/assets/627b733e-78ab-4f56-98be-8fdc6574cd32" />
+
+- Support Page:
+<img width="1920" height="921" alt="Support_page" src="https://github.com/user-attachments/assets/1eb5f439-f492-470c-a278-97caf39c2e61" />
+
+
+
 
 
 
