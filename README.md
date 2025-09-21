@@ -4,8 +4,8 @@
 📖Overview:
 Client Query Management System is a simple web application built using Streamlit where:
 
-- clients can login & raise their queries
-- support team members can login and view all queries,close open queries and can see the history of closed queries
+- Clients can login & raise their queries.
+- Support team members can login and view all queries,close open queries and can see the history of closed queries.
 
 
 🚀Features:
@@ -18,13 +18,12 @@ Client Query Management System is a simple web application built using Streamlit
 🛠 Tech Stack:
 - Frontend / App: Python, Streamlit
 - Database: MySQL
-📚Libraries:-
+- Libraries:-
+   - pymysql.
+   - hashlib.
+   - pandas, numpy.
 
-   - pymysql
-   - hashlib
-   - pandas, numpy
-
-⚙️ Setup Instructions
+⚙️ Setup Instructions:
 
 1️⃣ Download the Project:
 
